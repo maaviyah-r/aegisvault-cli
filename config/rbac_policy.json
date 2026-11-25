@@ -1,0 +1,79 @@
+{
+  "roles": {
+    "security_admin": {
+      "description": "Full security administration: IPS management, NAC admission, policy updates, vault secrets, backup/restore, AI auditing.",
+      "permissions": [
+        "tunnel:connect",
+        "vault:read",
+        "vault:write",
+        "vault:delete",
+        "nac:view",
+        "nac:manage",
+        "ips:view",
+        "ips:manage",
+        "firewall:view",
+        "firewall:manage",
+        "siem:view",
+        "siem:verify",
+        "audit:run",
+        "backup:create",
+        "backup:restore",
+        "report:generate"
+      ]
+    },
+    "network_admin": {
+      "description": "Manages VPN tunnels, VLANs, firewall ACLs, NAC registry, and network availability diagnostics.",
+      "permissions": [
+        "tunnel:connect",
+        "nac:view",
+        "nac:manage",
+        "firewall:view",
+        "firewall:manage",
+        "ips:view",
+        "siem:view",
+        "report:generate"
+      ]
+    },
+    "system_admin": {
+      "description": "Manages Vault server availability, encrypted backups, disaster recovery, and system configuration.",
+      "permissions": [
+        "tunnel:connect",
+        "vault:read",
+        "vault:write",
+        "backup:create",
+        "backup:restore",
+        "siem:view",
+        "report:generate"
+      ]
+    },
+    "security_analyst": {
+      "description": "SOC analyst with read access to SIEM logs, IPS alerts, vulnerability scans, AI threat auditing, and security reports.",
+      "permissions": [
+        "tunnel:connect",
+        "ips:view",
+        "firewall:view",
+        "nac:view",
+        "siem:view",
+        "siem:verify",
+        "audit:run",
+        "report:generate"
+      ]
+    },
+    "it_manager": {
+      "description": "Executive oversight: views compliance reports, risk assessments, SIEM summaries, and AI audit briefings.",
+      "permissions": [
+        "tunnel:connect",
+        "siem:view",
+        "audit:run",
+        "report:generate"
+      ]
+    },
+    "end_user": {
+      "description": "Standard authenticated employee with least-privilege encrypted tunnel access and vault read access only.",
+      "permissions": [
+        "tunnel:connect",
+        "vault:read"
+      ]
+    }
+  }
+}

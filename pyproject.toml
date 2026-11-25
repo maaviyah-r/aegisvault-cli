@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aegisvault-cli"
+version = "1.0.0"
+description = "Dual-container CLI network security suite with TLS/AES-GCM mini-VPN tunneling, NAC/RBAC, active IPS defense, and Ollama local AI threat auditing."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Maaviyah"}
+]
+dependencies = [
+    "cryptography>=43.0.0",
+    "rich>=13.9.0",
+]
+
+[project.scripts]
+aegisvault = "aegisvault.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["aegisvault*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

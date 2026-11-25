@@ -1,0 +1,56 @@
+{
+  "minimum_posture_score": 80,
+  "quarantine_vlan": "VLAN-99-QUARANTINE",
+  "devices": {
+    "gw-edge-01": {
+      "hostname": "aegis-gateway-01",
+      "mac_address": "02:42:AC:14:00:02",
+      "assigned_vlan": "VLAN-30-DMZ",
+      "os_version": "Linux-Container-Hardened-6.8",
+      "posture_score": 96,
+      "antivirus_active": true,
+      "firewall_enabled": true,
+      "status": "APPROVED"
+    },
+    "ws-admin-01": {
+      "hostname": "sec-admin-workstation",
+      "mac_address": "02:42:AC:10:00:10",
+      "assigned_vlan": "VLAN-10-ADMIN",
+      "os_version": "Windows-11-Enterprise-24H2",
+      "posture_score": 98,
+      "antivirus_active": true,
+      "firewall_enabled": true,
+      "status": "APPROVED"
+    },
+    "ws-analyst-01": {
+      "hostname": "soc-analyst-node",
+      "mac_address": "02:42:AC:20:00:15",
+      "assigned_vlan": "VLAN-20-CORP",
+      "os_version": "Windows-11-Pro-24H2",
+      "posture_score": 92,
+      "antivirus_active": true,
+      "firewall_enabled": true,
+      "status": "APPROVED"
+    },
+    "ws-corp-01": {
+      "hostname": "corp-user-laptop",
+      "mac_address": "02:42:AC:20:00:25",
+      "assigned_vlan": "VLAN-20-CORP",
+      "os_version": "Windows-11-Pro-24H2",
+      "posture_score": 88,
+      "antivirus_active": true,
+      "firewall_enabled": true,
+      "status": "APPROVED"
+    },
+    "ws-unpatched-99": {
+      "hostname": "legacy-unpatched-host",
+      "mac_address": "02:42:AC:99:00:99",
+      "assigned_vlan": "VLAN-99-QUARANTINE",
+      "os_version": "Windows-7-EOL",
+      "posture_score": 45,
+      "antivirus_active": false,
+      "firewall_enabled": false,
+      "status": "QUARANTINED"
+    }
+  }
+}

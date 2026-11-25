@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    AEGISVAULT_VAULT_HOST=aegisvault-server \
+    AEGISVAULT_VAULT_PORT=8443 \
+    AEGISVAULT_OLLAMA_URL=http://host.docker.internal:11434 \
+    AEGISVAULT_OLLAMA_MODEL=qwen2.5
+
+COPY requirements.txt pyproject.toml ./
+RUN pip install --no-cache-dir cryptography rich
+
+COPY config ./config
+COPY aegisvault ./aegisvault
+
+ENTRYPOINT ["python", "-m", "aegisvault"]
+CMD ["client", "ping", "--host", "aegisvault-server", "--port", "8443", "--auto-mfa"]

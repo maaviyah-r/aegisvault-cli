@@ -1,0 +1,65 @@
+services:
+  aegisvault-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.vault
+    container_name: aegisvault-server
+    hostname: aegisvault-server
+    environment:
+      AEGISVAULT_VAULT_HOST: "0.0.0.0"
+      AEGISVAULT_VAULT_PORT: "8443"
+      AEGISVAULT_OLLAMA_URL: "http://host.docker.internal:11434"
+      AEGISVAULT_OLLAMA_MODEL: "qwen2.5"
+      AEGISVAULT_RUNTIME_DIR: "/shared-runtime"
+    volumes:
+      - aegis_runtime:/shared-runtime
+    ports:
+      - "127.0.0.1:8443:8443"
+    networks:
+      vlan40_vault:
+        ipv4_address: 10.10.40.10
+      vlan30_dmz:
+        ipv4_address: 10.10.30.10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  aegisvault-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: aegisvault-gateway
+    hostname: aegisvault-gateway
+    depends_on:
+      - aegisvault-server
+    environment:
+      AEGISVAULT_VAULT_HOST: "aegisvault-server"
+      AEGISVAULT_VAULT_PORT: "8443"
+      AEGISVAULT_OLLAMA_URL: "http://host.docker.internal:11434"
+      AEGISVAULT_OLLAMA_MODEL: "qwen2.5"
+      AEGISVAULT_RUNTIME_DIR: "/shared-runtime"
+    volumes:
+      - aegis_runtime:/shared-runtime
+    networks:
+      vlan30_dmz:
+        ipv4_address: 10.10.30.20
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    stdin_open: true
+    tty: true
+
+networks:
+  vlan30_dmz:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.30.0/24
+  vlan40_vault:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.10.40.0/24
+
+volumes:
+  aegis_runtime:

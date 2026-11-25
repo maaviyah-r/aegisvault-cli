@@ -1,0 +1,203 @@
+{
+  "policy_version": "1.0.0",
+  "organization": "AegisVault Enterprise Local Network",
+  "vlans": {
+    "VLAN-10-ADMIN": {
+      "subnet": "10.10.10.0/24",
+      "purpose": "Security & Network Administration Management Plane",
+      "security_zone": "RESTRICTED"
+    },
+    "VLAN-20-CORP": {
+      "subnet": "10.10.20.0/24",
+      "purpose": "Authorized Enterprise Workstations & Vault Clients",
+      "security_zone": "INTERNAL"
+    },
+    "VLAN-30-DMZ": {
+      "subnet": "10.10.30.0/24",
+      "purpose": "Edge Gateway Container & Public-Facing Ingress",
+      "security_zone": "DMZ"
+    },
+    "VLAN-40-VAULT": {
+      "subnet": "10.10.40.0/24",
+      "purpose": "Vault Core Server, Auth/NAC Engine, SIEM & Encrypted DB",
+      "security_zone": "CORE_VAULT"
+    },
+    "VLAN-99-QUARANTINE": {
+      "subnet": "10.10.99.0/24",
+      "purpose": "Non-Compliant / Blocked Devices Isolated by NAC/IPS",
+      "security_zone": "QUARANTINE"
+    }
+  },
+  "ips_thresholds": {
+    "rate_limit_window_seconds": 10,
+    "max_requests_per_window": 25,
+    "brute_force_max_failures": 4,
+    "brute_force_window_seconds": 60,
+    "port_scan_threshold": 5,
+    "max_payload_bytes": 65536,
+    "default_ban_duration_seconds": 300,
+    "replay_window_size": 64
+  },
+  "firewall_rules": [
+    {
+      "rule_id": "NSR-01",
+      "name": "Enforce TLS 1.3 Tunnel Ingress",
+      "zone_src": "VLAN-30-DMZ",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "TCP",
+      "port": 8443,
+      "action": "ALLOW",
+      "description": "Allow only mutually authenticated TLS 1.3 / AES-256-GCM VPN tunnel traffic to Vault port 8443."
+    },
+    {
+      "rule_id": "NSR-02",
+      "name": "Block Cleartext Legacy Protocols",
+      "zone_src": "ANY",
+      "zone_dst": "ANY",
+      "protocol": "TCP",
+      "port": "21,23,80",
+      "action": "DENY",
+      "description": "Deny unencrypted FTP (21), Telnet (23), and plaintext HTTP (80) across all internal VLANs."
+    },
+    {
+      "rule_id": "NSR-03",
+      "name": "Mandatory NAC Device Admission",
+      "zone_src": "VLAN-20-CORP",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "TLS-VPN",
+      "port": 8443,
+      "action": "ALLOW_IF_COMPLIANT",
+      "description": "Require valid NAC device registration, MAC match, and posture score >= 80 before admitting tunnel sessions."
+    },
+    {
+      "rule_id": "NSR-04",
+      "name": "Isolate Quarantine VLAN",
+      "zone_src": "VLAN-99-QUARANTINE",
+      "zone_dst": "VLAN-10-ADMIN,VLAN-20-CORP,VLAN-40-VAULT",
+      "protocol": "ANY",
+      "port": "ANY",
+      "action": "DENY",
+      "description": "Block all lateral movement from quarantined hosts to production or administrative subnets."
+    },
+    {
+      "rule_id": "NSR-05",
+      "name": "Enforce RBAC Least Privilege",
+      "zone_src": "VLAN-20-CORP",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "APP",
+      "port": 8443,
+      "action": "ENFORCE_RBAC",
+      "description": "Restrict every Vault and administrative command strictly to roles authorized in rbac_policy.json."
+    },
+    {
+      "rule_id": "NSR-06",
+      "name": "Restrict Management Plane Access",
+      "zone_src": "VLAN-10-ADMIN",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "TLS-VPN",
+      "port": 8443,
+      "action": "ALLOW",
+      "description": "Allow policy updates, IPS unban, and backup/restore commands exclusively from admin roles."
+    },
+    {
+      "rule_id": "NSR-07",
+      "name": "Rate-Limit Flood / DDoS Protection",
+      "zone_src": "ANY",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "TCP",
+      "port": 8443,
+      "action": "RATE_LIMIT_AND_BLOCK",
+      "description": "Automatically quarantine any source exceeding 25 requests per 10 seconds to mitigate DoS/DDoS floods."
+    },
+    {
+      "rule_id": "NSR-08",
+      "name": "Brute-Force Authentication Lockout",
+      "zone_src": "ANY",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "TLS-VPN",
+      "port": 8443,
+      "action": "LOCKOUT",
+      "description": "Trigger active IPS ban after 4 failed authentication attempts within 60 seconds."
+    },
+    {
+      "rule_id": "NSR-09",
+      "name": "Deep Payload Injection Blocking",
+      "zone_src": "ANY",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "TLS-VPN",
+      "port": 8443,
+      "action": "INSPECT_AND_DROP",
+      "description": "Drop packets and ban sources containing SQL injection, command injection, path traversal, or shellcode patterns."
+    },
+    {
+      "rule_id": "NSR-10",
+      "name": "Cryptographic Integrity & Replay Defense",
+      "zone_src": "ANY",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "AES-256-GCM",
+      "port": 8443,
+      "action": "VERIFY_AND_DROP",
+      "description": "Verify AES-256-GCM authentication tags and monotonic sequence numbers on every tunnel frame to stop MITM/replay."
+    },
+    {
+      "rule_id": "NSR-11",
+      "name": "Local-Only AI Auditing Binding",
+      "zone_src": "VLAN-40-VAULT",
+      "zone_dst": "LOCALHOST-OLLAMA",
+      "protocol": "HTTP",
+      "port": 11434,
+      "action": "ALLOW_LOOPBACK_ONLY",
+      "description": "Keep AI threat auditing strictly bound to local Ollama (127.0.0.1:11434) so sensitive SIEM logs never leave the host."
+    },
+    {
+      "rule_id": "NSR-12",
+      "name": "Tamper-Evident SIEM Hash Chaining",
+      "zone_src": "VLAN-40-VAULT",
+      "zone_dst": "SIEM-STORE",
+      "protocol": "INTERNAL",
+      "port": 0,
+      "action": "AUDIT_LOG",
+      "description": "Log all authentication, NAC, firewall, IPS, and vault events with SHA-256 hash chaining for forensic accountability."
+    },
+    {
+      "rule_id": "NSR-13",
+      "name": "Restrict Maximum Frame Size",
+      "zone_src": "ANY",
+      "zone_dst": "VLAN-40-VAULT",
+      "protocol": "TCP",
+      "port": 8443,
+      "action": "DROP_OVERSIZED",
+      "description": "Drop frames exceeding 64 KB to prevent memory exhaustion and buffer abuse attacks."
+    },
+    {
+      "rule_id": "NSR-14",
+      "name": "Encrypted Backup & Integrity Verification",
+      "zone_src": "VLAN-10-ADMIN",
+      "zone_dst": "BACKUP-VAULT",
+      "protocol": "AES-256-GCM",
+      "port": 0,
+      "action": "ENCRYPT_BACKUP",
+      "description": "Encrypt all vault state and security policy backups with AES-256-GCM and verify SHA-256 checksums before restore."
+    },
+    {
+      "rule_id": "NSR-15",
+      "name": "Default-Deny Implicit Drop",
+      "zone_src": "ANY",
+      "zone_dst": "ANY",
+      "protocol": "ANY",
+      "port": "ANY",
+      "action": "DENY",
+      "description": "Implicitly drop and log any network connection or command not explicitly permitted by preceding security rules."
+    },
+    {
+      "rule_id": "NSR-16",
+      "name": "Port Scan & Reconnaissance Mitigation",
+      "zone_src": "ANY",
+      "zone_dst": "VLAN-30-DMZ,VLAN-40-VAULT",
+      "protocol": "TCP",
+      "port": "ANY",
+      "action": "DETECT_AND_BLOCK",
+      "description": "Detect rapid probing of unauthorized ports or services and trigger immediate IPS quarantine."
+    }
+  ]
+}

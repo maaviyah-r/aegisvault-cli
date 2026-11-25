@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+
+# Runtime generated state (certs, logs, backups, vault db)
+runtime/
+*.log
+*.jsonl
+*.enc
+
+# Local academic reports & generators (kept on machine, never tracked in Git)
+docs/
+scripts/
+*.docx
+*.pdf
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
